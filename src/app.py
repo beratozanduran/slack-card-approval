@@ -38,8 +38,16 @@ def create_app(cfg=None) -> App:
             repo=repo, approver_user_id=cfg.approver_user_id,
         )
 
-    ws = open_worksheet(cfg.service_account_json, cfg.sheets_id)
-    sheets_sync_fn = SheetsSync(ws)
+    try:
+        ws = open_worksheet(cfg.service_account_json, cfg.sheets_id)
+        sheets_sync_fn = SheetsSync(ws)
+    except Exception as e:
+        logging.error(
+            "Sheets 초기화 실패 — 모든 동기화는 큐로 적재됩니다: %s", e
+        )
+
+        def sheets_sync_fn(row):
+            raise RuntimeError("sheets unavailable at startup")
 
     @app.action("approve")
     @app.action("reject")
