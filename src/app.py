@@ -3,6 +3,7 @@ from slack_bolt import App
 from config import load_config
 from db import connect, init_schema
 from services.approval_repo import ApprovalRepo
+from services.sheets_sync import SheetsSync, open_worksheet
 from handlers.command import handle_approval_command
 from handlers.view_submission import handle_view_submission
 from handlers.buttons import handle_decision
@@ -23,7 +24,8 @@ def create_app(cfg=None) -> App:
             repo=repo, approver_user_id=cfg.approver_user_id,
         )
 
-    sheets_sync_fn = lambda row: None  # T11에서 실제 SheetsSync 주입
+    ws = open_worksheet(cfg.service_account_json, cfg.sheets_id)
+    sheets_sync_fn = SheetsSync(ws)
 
     @app.action("approve")
     @app.action("reject")
