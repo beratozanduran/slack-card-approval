@@ -8,12 +8,16 @@ HEADER = ["id", "신청자", "용도", "금액", "사용날짜", "가맹점",
           "상태", "승인자", "처리일시", "신청일시"]
 
 
+def _to_str(v):
+    return v.isoformat() if hasattr(v, "isoformat") else v
+
+
 def build_row(row: dict) -> list:
     return [
         row["id"], row["requester_name"], row["category"],
-        row["amount"], row["used_date"], row["merchant"],
+        row["amount"], _to_str(row["used_date"]), row["merchant"],
         row["status"], row["decided_by"],
-        row["decided_at"], row["created_at"],
+        _to_str(row["decided_at"]), _to_str(row["created_at"]),
     ]
 
 
