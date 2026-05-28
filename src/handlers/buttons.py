@@ -1,7 +1,13 @@
+import logging
+
 from views.approval_card import build_decided_card
 from services.approval_repo import ApprovalNotPending
+from services.sheets_retry import enqueue
 
-def handle_decision(*, ack, body, client, repo, approver_user_id,
+log = logging.getLogger(__name__)
+
+
+def handle_decision(*, ack, body, client, repo, conn, approver_user_id,
                     log_channel_id, sheets_sync, respond=None):
     ack()
     user_id = body["user"]["id"]
@@ -39,4 +45,8 @@ def handle_decision(*, ack, body, client, repo, approver_user_id,
         text=(f"카드 승인 요청 #{row['id']}이(가) "
               f"{'승인' if decision == 'approved' else '반려'}되었습니다."),
     )
-    sheets_sync(row)
+    try:
+        sheets_sync(dict(row))
+    except Exception as e:
+        log.error("Sheets sync 즉시 실패, 큐 적재: %s", e)
+        enqueue(conn, row["id"], str(e))

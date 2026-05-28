@@ -25,7 +25,7 @@ def test_approve_updates_status_and_msg(setup):
         "message": {"ts": "1.0"}, "channel": {"id": "D1"},
     }
     handle_decision(
-        ack=ack, body=body, client=client, repo=repo,
+        ack=ack, body=body, client=client, repo=repo, conn=conn,
         approver_user_id="U_APPR", log_channel_id="C_LOG",
         sheets_sync=MagicMock(),
     )
@@ -46,7 +46,7 @@ def test_non_approver_rejected(setup):
         "message": {"ts": "1.0"}, "channel": {"id": "D1"},
     }
     handle_decision(
-        ack=ack, body=body, client=client, repo=repo,
+        ack=ack, body=body, client=client, repo=repo, conn=conn,
         approver_user_id="U_APPR", log_channel_id="C_LOG",
         sheets_sync=MagicMock(), respond=respond,
     )
@@ -62,10 +62,10 @@ def test_double_click_ignored(setup):
         "message": {"ts": "1.0"}, "channel": {"id": "D1"},
     }
     sheets = MagicMock()
-    handle_decision(ack=ack, body=body, client=client, repo=repo,
+    handle_decision(ack=ack, body=body, client=client, repo=repo, conn=conn,
                     approver_user_id="U_APPR", log_channel_id="C_LOG",
                     sheets_sync=sheets, respond=respond)
-    handle_decision(ack=ack, body=body, client=client, repo=repo,
+    handle_decision(ack=ack, body=body, client=client, repo=repo, conn=conn,
                     approver_user_id="U_APPR", log_channel_id="C_LOG",
                     sheets_sync=sheets, respond=respond)
     assert sheets.call_count == 1  # 두 번째는 무시

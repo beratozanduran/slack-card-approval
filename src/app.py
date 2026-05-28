@@ -1,12 +1,26 @@
+import logging
+import threading
+import time
+
 from slack_bolt import App
 
 from config import load_config
 from db import connect, init_schema
 from services.approval_repo import ApprovalRepo
 from services.sheets_sync import SheetsSync, open_worksheet
+from services.sheets_retry import drain_once
 from handlers.command import handle_approval_command
 from handlers.view_submission import handle_view_submission
 from handlers.buttons import handle_decision
+
+
+def _retry_worker(conn, repo, sheets_sync_fn):
+    while True:
+        try:
+            drain_once(conn, repo, sheets_sync_fn)
+        except Exception as e:
+            logging.error("retry worker 오류: %s", e)
+        time.sleep(300)  # 5분
 
 
 def create_app(cfg=None) -> App:
@@ -31,10 +45,17 @@ def create_app(cfg=None) -> App:
     @app.action("reject")
     def _on_decision(ack, body, client, respond):
         handle_decision(
-            ack=ack, body=body, client=client, repo=repo,
+            ack=ack, body=body, client=client, repo=repo, conn=conn,
             approver_user_id=cfg.approver_user_id,
             log_channel_id=cfg.log_channel_id,
             sheets_sync=sheets_sync_fn,
             respond=respond,
         )
+
+    t = threading.Thread(
+        target=_retry_worker,
+        args=(conn, repo, sheets_sync_fn),
+        daemon=True,
+    )
+    t.start()
     return app
