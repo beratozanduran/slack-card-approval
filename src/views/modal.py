@@ -1,4 +1,36 @@
+import json
+
 from constants import CATEGORIES
+
+
+def build_reject_reason_modal(*, approval_id: int, approver_msg_ts: str,
+                              channel: str) -> dict:
+    """반려 사유를 입력받는 모달. 처리에 필요한 맥락은 private_metadata로 전달."""
+    return {
+        "type": "modal",
+        "callback_id": "reject_reason_submit",
+        "private_metadata": json.dumps({
+            "approval_id": approval_id,
+            "approver_msg_ts": approver_msg_ts,
+            "channel": channel,
+        }),
+        "title": {"type": "plain_text", "text": "반려 사유 입력"},
+        "submit": {"type": "plain_text", "text": "반려"},
+        "close": {"type": "plain_text", "text": "취소"},
+        "blocks": [
+            {
+                "type": "input",
+                "block_id": "reject_reason",
+                "label": {"type": "plain_text", "text": "반려 사유"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "value",
+                    "multiline": True,
+                    "max_length": 500,
+                },
+            },
+        ],
+    }
 
 
 def build_approval_modal(*, prefill_name: str) -> dict:

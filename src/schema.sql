@@ -9,8 +9,11 @@ CREATE TABLE IF NOT EXISTS approvals (
   status          TEXT NOT NULL
                   CHECK(status IN ('pending','approved','rejected')),
   decided_by      TEXT,
+  decided_by_name TEXT,
+  reject_reason   TEXT,
   decided_at      TIMESTAMP,
   approver_msg_ts TEXT,
+  channel_msg_ts  TEXT,
   created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_status ON approvals(status);

@@ -11,7 +11,7 @@ from services.sheets_sync import SheetsSync, open_worksheet
 from services.sheets_retry import drain_once
 from handlers.command import handle_approval_command
 from handlers.view_submission import handle_view_submission
-from handlers.buttons import handle_decision
+from handlers.buttons import handle_decision, handle_reject_reason
 
 
 def _retry_worker(conn, repo, sheets_sync_fn):
@@ -29,13 +29,14 @@ def create_app(cfg=None) -> App:
     init_schema(conn)
     repo = ApprovalRepo(conn)
     app = App(token=cfg.bot_token, signing_secret=cfg.signing_secret)
-    app.command("/approval")(handle_approval_command)
+    app.command("/카드결재")(handle_approval_command)
 
     @app.view("approval_submit")
     def _on_submit(ack, body, client):
         handle_view_submission(
             ack=ack, body=body, client=client,
             repo=repo, approver_user_id=cfg.approver_user_id,
+            log_channel_id=cfg.log_channel_id,
         )
 
     try:
@@ -58,6 +59,14 @@ def create_app(cfg=None) -> App:
             log_channel_id=cfg.log_channel_id,
             sheets_sync=sheets_sync_fn,
             respond=respond,
+        )
+
+    @app.view("reject_reason_submit")
+    def _on_reject_reason(ack, body, client):
+        handle_reject_reason(
+            ack=ack, body=body, client=client, repo=repo, conn=conn,
+            log_channel_id=cfg.log_channel_id,
+            sheets_sync=sheets_sync_fn,
         )
 
     t = threading.Thread(

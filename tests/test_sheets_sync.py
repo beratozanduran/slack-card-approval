@@ -8,14 +8,29 @@ def test_build_row_orders_columns_correctly():
         "id": 42, "requester_name": "Ozan", "category": "점심식비",
         "amount": 12000, "used_date": "2026-05-28",
         "merchant": "김밥천국", "status": "approved",
-        "decided_by": "U_APPR", "decided_at": "2026-05-28T14:33",
-        "created_at": "2026-05-28T14:32",
+        "decided_by": "U_APPR", "decided_by_name": "오잔",
+        "reject_reason": None,
+        "decided_at": "2026-05-28T14:33", "created_at": "2026-05-28T14:32",
     }
+    # 승인자는 이름(decided_by_name)으로, 상태는 한글로 기록
     assert build_row(row) == [
         42, "Ozan", "점심식비", 12000, "2026-05-28",
-        "김밥천국", "approved", "U_APPR",
+        "김밥천국", "승인", "오잔", "",
         "2026-05-28T14:33", "2026-05-28T14:32",
     ]
+
+
+def test_build_row_records_reject_reason_and_label():
+    row = {
+        "id": 7, "requester_name": "Ozan", "category": "기타비용",
+        "amount": 5000, "used_date": "2026-05-28", "merchant": "m",
+        "status": "rejected", "decided_by": "U_APPR",
+        "decided_by_name": "오잔", "reject_reason": "영수증 누락",
+        "decided_at": "t", "created_at": "t",
+    }
+    out = build_row(row)
+    assert out[6] == "반려"
+    assert out[8] == "영수증 누락"
 
 
 def test_build_row_converts_date_and_datetime_to_iso_strings():
@@ -29,8 +44,8 @@ def test_build_row_converts_date_and_datetime_to_iso_strings():
     }
     result = build_row(row)
     assert result[4] == "2026-05-28"
-    assert result[8] == "2026-05-28T14:33:00"
-    assert result[9] == "2026-05-28T14:32:00"
+    assert result[9] == "2026-05-28T14:33:00"
+    assert result[10] == "2026-05-28T14:32:00"
 
 
 def test_sync_appends_row_to_worksheet():

@@ -47,15 +47,25 @@ class ApprovalRepo:
         ).fetchall()
         return {r["status"]: (r["cnt"], r["total"]) for r in rows}
 
+    def set_channel_msg_ts(self, approval_id: int, channel_msg_ts: str) -> None:
+        """신청 시 로그 채널에 게시한 부모 메시지 ts를 저장한다(스레드 기준점)."""
+        self.conn.execute(
+            "UPDATE approvals SET channel_msg_ts = ? WHERE id = ?",
+            (channel_msg_ts, approval_id),
+        )
+        self.conn.commit()
+
     def decide(self, approval_id: int, status: str,
-               decided_by: str, approver_msg_ts: str) -> sqlite3.Row:
+               decided_by: str, approver_msg_ts: str,
+               decided_by_name: str | None = None,
+               reject_reason: str | None = None) -> sqlite3.Row:
         assert status in ("approved", "rejected")
         cur = self.conn.execute(
             """UPDATE approvals
-                  SET status = ?, decided_by = ?, decided_at = ?,
-                      approver_msg_ts = ?
+                  SET status = ?, decided_by = ?, decided_by_name = ?,
+                      reject_reason = ?, decided_at = ?, approver_msg_ts = ?
                 WHERE id = ? AND status = 'pending'""",
-            (status, decided_by,
+            (status, decided_by, decided_by_name, reject_reason,
              datetime.now(timezone.utc).replace(tzinfo=None).isoformat(sep=" "),
              approver_msg_ts, approval_id),
         )

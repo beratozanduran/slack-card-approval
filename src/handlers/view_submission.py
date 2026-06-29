@@ -1,7 +1,7 @@
 import logging
 from datetime import date
 
-from views.approval_card import build_approval_card
+from views.approval_card import build_approval_card, build_pending_channel_card
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +42,18 @@ def _validate(values: dict) -> tuple[dict, dict]:
     return errors, parsed
 
 
-def handle_view_submission(*, ack, body, client, repo, approver_user_id):
+def _notify_requester_error(client, requester_id):
+    try:
+        client.chat_postMessage(
+            channel=requester_id,
+            text="신청 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        )
+    except Exception:
+        log.exception("신청자 재시도 안내 DM도 실패")
+
+
+def handle_view_submission(*, ack, body, client, repo, approver_user_id,
+                           log_channel_id):
     values = body["view"]["state"]["values"]
 
     errors, parsed = _validate(values)
@@ -63,8 +74,23 @@ def handle_view_submission(*, ack, body, client, repo, approver_user_id):
         used_date=parsed["used_date"], merchant=merchant,
     )
 
-    # I2: 승인자 DM이 실패하면 좀비 pending row가 남으므로 삭제하고
-    # 신청자에게 재시도를 안내한다.
+    # 투명성: 신청 즉시 로그 채널에 '대기중' 카드를 게시한다. 이 메시지가
+    # 스레드 기준점이 되어, 승인/반려 결과가 같은 스레드에 공개로 남는다.
+    try:
+        posted = client.chat_postMessage(
+            channel=log_channel_id,
+            blocks=build_pending_channel_card(dict(row)),
+            text=f"카드 사용 승인 요청 #{row['id']} (대기중)",
+        )
+        repo.set_channel_msg_ts(row["id"], posted["ts"])
+    except Exception as e:
+        log.error("로그 채널 게시 실패, pending row 삭제 (#%s): %s", row["id"], e)
+        repo.delete(row["id"])
+        _notify_requester_error(client, body["user"]["id"])
+        return
+
+    # I2: 승인자 DM이 실패하면 좀비 pending row가 남으므로 채널 카드와 함께
+    # 정리하고 신청자에게 재시도를 안내한다.
     try:
         client.chat_postMessage(
             channel=approver_user_id,
@@ -72,12 +98,10 @@ def handle_view_submission(*, ack, body, client, repo, approver_user_id):
             text=f"카드 승인 요청 #{row['id']}",
         )
     except Exception as e:
-        log.error("승인자 DM 실패, pending row 삭제 (#%s): %s", row["id"], e)
-        repo.delete(row["id"])
+        log.error("승인자 DM 실패, 롤백 (#%s): %s", row["id"], e)
         try:
-            client.chat_postMessage(
-                channel=body["user"]["id"],
-                text="신청 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
-            )
+            client.chat_delete(channel=log_channel_id, ts=posted["ts"])
         except Exception:
-            log.exception("신청자 재시도 안내 DM도 실패")
+            log.exception("채널 대기중 카드 삭제 실패 (#%s)", row["id"])
+        repo.delete(row["id"])
+        _notify_requester_error(client, body["user"]["id"])
