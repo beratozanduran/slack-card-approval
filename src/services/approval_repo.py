@@ -28,6 +28,25 @@ class ApprovalRepo:
             "SELECT * FROM approvals WHERE id = ?", (approval_id,)
         ).fetchone()
 
+    def delete(self, approval_id: int) -> None:
+        self.conn.execute(
+            "DELETE FROM approvals WHERE id = ?", (approval_id,)
+        )
+        self.conn.commit()
+
+    def usage_by_status(self, requester_id: str) -> dict[str, tuple[int, int]]:
+        """신청자의 전체 기간 사용 내역을 상태별 (건수, 총액)으로 집계한다."""
+        rows = self.conn.execute(
+            """SELECT status,
+                      COUNT(*)            AS cnt,
+                      COALESCE(SUM(amount), 0) AS total
+                 FROM approvals
+                WHERE requester_id = ?
+                GROUP BY status""",
+            (requester_id,),
+        ).fetchall()
+        return {r["status"]: (r["cnt"], r["total"]) for r in rows}
+
     def decide(self, approval_id: int, status: str,
                decided_by: str, approver_msg_ts: str) -> sqlite3.Row:
         assert status in ("approved", "rejected")
