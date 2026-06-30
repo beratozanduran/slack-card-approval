@@ -13,7 +13,8 @@ def _decider_name(client, user_id: str) -> str:
     """Sheets/카드 가독성을 위해 승인자 ID 대신 표시 이름을 얻는다."""
     try:
         profile = client.users_info(user=user_id)["user"]["profile"]
-        return profile.get("display_name") or profile.get("real_name") or user_id
+        # 성명(real_name) 우선, 없으면 표시이름.
+        return profile.get("real_name") or profile.get("display_name") or user_id
     except Exception:
         log.exception("승인자 이름 조회 실패 (%s)", user_id)
         return user_id
