@@ -54,8 +54,7 @@ def build_decided_card(row: dict) -> list:
     status_label = "✅ 승인됨" if row["status"] == "approved" else "❌ 반려됨"
     blocks = [
         {"type": "header",
-         "text": {"type": "plain_text",
-                  "text": f"{status_label} (#{row['id']})"}},
+         "text": {"type": "plain_text", "text": status_label}},
         {"type": "section", "fields": _fields(row)},
     ]
     if row["status"] == "rejected" and row.get("reject_reason"):
