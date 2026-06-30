@@ -10,7 +10,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-mock>=3.12"]
+# boto3는 Lambda 런타임에 기본 포함. 로컬에서 SSM 경로를 테스트할 때만 필요.
+dev = ["pytest>=8.0", "pytest-mock>=3.12", "boto3>=1.34"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

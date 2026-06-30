@@ -1,0 +1,13 @@
+# 이 파일을 terraform.tfvars로 복사하고 값을 채운다. (terraform.tfvars는 .gitignore됨)
+aws_region    = "ap-northeast-2"
+function_name = "edukard"
+
+slack_bot_token      = "xoxb-..."
+slack_signing_secret = "..."
+approver_user_id     = "U01ABCDEF"
+log_channel_id       = "C01XYZ"
+
+google_sheets_id = "1abc..."
+# 서비스 계정 JSON 전체 내용. file()로 읽는 걸 권장:
+google_service_account_json = "{ ... }"
+# 예) google_service_account_json = file("${path.module}/../secrets/sa.json")

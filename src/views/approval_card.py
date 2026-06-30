@@ -1,3 +1,6 @@
+import json
+
+
 def _fields(row: dict) -> list:
     return [
         {"type": "mrkdwn", "text": f"*신청자*\n{row['requester_name']}"},
@@ -10,20 +13,24 @@ def _fields(row: dict) -> list:
 
 
 def build_approval_card(row: dict) -> list:
-    """승인자 DM용 카드 — 승인/반려 버튼 포함."""
-    aid = str(row["id"])
+    """승인자 DM용 카드 — 승인/반려 버튼 포함.
+
+    DB가 없으므로 신청 데이터 전체를 버튼 value(JSON)에 실어 결정 시점까지 운반한다.
+    (Slack 버튼 value 최대 2000자 — 본 페이로드는 충분히 작다.)
+    """
+    payload = json.dumps(row, ensure_ascii=False)
     return [
         {"type": "header",
          "text": {"type": "plain_text",
-                  "text": f"💳 카드 사용 승인 요청 (#{row['id']})"}},
+                  "text": f"💳 에듀카드 사용 요청 (#{row['id']})"}},
         {"type": "section", "fields": _fields(row)},
         {"type": "actions", "block_id": "decision", "elements": [
             {"type": "button", "action_id": "approve",
              "text": {"type": "plain_text", "text": "✅ 승인"},
-             "style": "primary", "value": aid},
+             "style": "primary", "value": payload},
             {"type": "button", "action_id": "reject",
              "text": {"type": "plain_text", "text": "❌ 반려"},
-             "style": "danger", "value": aid},
+             "style": "danger", "value": payload},
         ]},
     ]
 
@@ -33,7 +40,7 @@ def build_pending_channel_card(row: dict) -> list:
     return [
         {"type": "header",
          "text": {"type": "plain_text",
-                  "text": f"💳 카드 사용 승인 요청 (#{row['id']})"}},
+                  "text": f"💳 에듀카드 사용 요청 (#{row['id']})"}},
         {"type": "section", "fields": _fields(row)},
         {"type": "context", "elements": [
             {"type": "mrkdwn",
@@ -71,8 +78,8 @@ def build_thread_result_text(row: dict) -> str:
     emoji = "✅" if row["status"] == "approved" else "❌"
     decider = row.get("decided_by_name") or f"<@{row['decided_by']}>"
     lines = [
-        f"{emoji} <@{row['requester_id']}> 님의 카드 사용 요청 #{row['id']}이(가) "
-        f"*{verb}*되었습니다.",
+        f"{emoji} <@{row['requester_id']}> 님의 '{row['category']}' "
+        f"사용 요청이 {verb}되었습니다.",
         f"• 처리자: {decider}",
     ]
     if row["status"] == "rejected" and row.get("reject_reason"):

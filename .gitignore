@@ -8,3 +8,15 @@ secrets/
 .pytest_cache/
 .DS_Store
 *.egg-info/
+
+# Lambda 빌드 산출물
+build/
+
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+*.tfvars
+!*.tfvars.example

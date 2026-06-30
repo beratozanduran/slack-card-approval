@@ -3,17 +3,18 @@ import json
 from constants import CATEGORIES
 
 
-def build_reject_reason_modal(*, approval_id: int, approver_msg_ts: str,
+def build_reject_reason_modal(*, row: dict, approver_msg_ts: str,
                               channel: str) -> dict:
-    """반려 사유를 입력받는 모달. 처리에 필요한 맥락은 private_metadata로 전달."""
+    """반려 사유를 입력받는 모달. DB가 없으므로 신청 데이터(row) 전체와 처리 맥락을
+    private_metadata로 운반한다(최대 3000자, 본 페이로드는 충분히 작다)."""
     return {
         "type": "modal",
         "callback_id": "reject_reason_submit",
         "private_metadata": json.dumps({
-            "approval_id": approval_id,
+            "row": row,
             "approver_msg_ts": approver_msg_ts,
             "channel": channel,
-        }),
+        }, ensure_ascii=False),
         "title": {"type": "plain_text", "text": "반려 사유 입력"},
         "submit": {"type": "plain_text", "text": "반려"},
         "close": {"type": "plain_text", "text": "취소"},
@@ -37,7 +38,7 @@ def build_approval_modal(*, prefill_name: str) -> dict:
     return {
         "type": "modal",
         "callback_id": "approval_submit",
-        "title": {"type": "plain_text", "text": "카드 사용 승인 신청"},
+        "title": {"type": "plain_text", "text": "에듀카드 사용 신청"},
         "submit": {"type": "plain_text", "text": "제출"},
         "close": {"type": "plain_text", "text": "취소"},
         "blocks": [
