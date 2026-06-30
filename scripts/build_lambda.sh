@@ -29,6 +29,16 @@ cp -R "$ROOT"/src/services "$PKG"/services
 # 로컬 전용 엔트리포인트는 패키지에서 제외
 rm -f "$PKG"/main.py
 
+# 콘솔 수동 배포용: SA JSON을 패키지에 포함(있으면). 이 경우 Lambda 환경변수에
+# GOOGLE_SERVICE_ACCOUNT_JSON=sa.json 로 지정하면 SSM 없이 동작한다.
+# (Terraform 경로는 SSM을 쓰므로 이 파일이 있어도 무시된다.)
+if [ -f "$ROOT/secrets/sa.json" ]; then
+  cp "$ROOT/secrets/sa.json" "$PKG/sa.json"
+  echo "==> secrets/sa.json 패키지에 포함 (env: GOOGLE_SERVICE_ACCOUNT_JSON=sa.json)"
+else
+  echo "==> secrets/sa.json 없음 → SSM 경로(GOOGLE_SA_SSM_PARAM) 사용 가정"
+fi
+
 echo "==> zip 생성: $ZIP"
 ( cd "$PKG" && zip -qr "$ZIP" . -x '*.pyc' -x '*/__pycache__/*' )
 

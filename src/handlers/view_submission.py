@@ -79,6 +79,17 @@ def _notify_requester_error(client, requester_id):
         log.exception("신청자 재시도 안내 DM도 실패")
 
 
+def submit_sync(ack, body, client, *, approver_user_id, log_channel_id):
+    """동기 모드(lazy 미사용)용: 검증→ack→게시를 한 호출에서 처리."""
+    errors, _ = _validate(body["view"]["state"]["values"])
+    if errors:
+        ack(response_action="errors", errors=errors)
+        return
+    ack()
+    process_submission(body, client, approver_user_id=approver_user_id,
+                       log_channel_id=log_channel_id)
+
+
 def process_submission(body, client, *, approver_user_id, log_channel_id):
     """신청을 게시한다(검증은 ack 단계에서 통과한 상태).
 
