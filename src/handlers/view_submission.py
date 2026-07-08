@@ -29,10 +29,7 @@ def _validate(values: dict) -> tuple[dict, dict]:
         used_date = date.fromisoformat(
             values["used_date"]["value"]["selected_date"]
         )
-        if used_date > date.today():
-            errors["used_date"] = "미래 날짜는 신청할 수 없습니다."
-        else:
-            parsed["used_date"] = used_date
+        parsed["used_date"] = used_date
     except (ValueError, TypeError, KeyError):
         errors["used_date"] = "사용 날짜를 선택해 주세요."
 

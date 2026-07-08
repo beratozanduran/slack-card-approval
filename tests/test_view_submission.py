@@ -28,11 +28,11 @@ def test_valid_submission_acks_clean():
     ack.assert_called_once_with()
 
 
-def test_future_date_acks_errors():
+def test_future_date_acks_clean():
+    # 미래 날짜도 허용한다(예정된 지출 사전 신청 등).
     ack = MagicMock()
     ack_submission(ack, _body(used_date="2099-01-01"))
-    assert ack.call_args.kwargs.get("response_action") == "errors"
-    assert "used_date" in ack.call_args.kwargs.get("errors", {})
+    ack.assert_called_once_with()
 
 
 def test_invalid_amount_acks_errors():
