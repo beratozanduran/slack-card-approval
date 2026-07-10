@@ -11,6 +11,14 @@ def _extract(values: dict, block_id: str, key: str):
     return values[block_id]["value"][key]
 
 
+def _extract_optional(values: dict, block_id: str, key: str) -> str:
+    """선택 입력 블록에서 값을 꺼낸다. 미입력이면 None/누락이므로 ""로 정규화."""
+    try:
+        return _extract(values, block_id, key) or ""
+    except (KeyError, TypeError):
+        return ""
+
+
 def _validate(values: dict) -> tuple[dict, dict]:
     """모달 입력을 검증한다. (errors, parsed)를 반환한다."""
     errors: dict = {}
@@ -61,6 +69,7 @@ def _row_from_values(body) -> dict:
         "amount": parsed["amount"],
         "used_date": parsed["used_date"].isoformat(),
         "merchant": _extract(values, "merchant", "value"),
+        "note": _extract_optional(values, "note", "value"),
         "created_at": now_kst_str(),
         "channel_msg_ts": None,
     }

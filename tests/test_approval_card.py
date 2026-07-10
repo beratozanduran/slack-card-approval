@@ -29,6 +29,13 @@ def test_pending_card_shows_amount_formatted():
     text = "".join(str(b) for b in blocks)
     assert "12,000원" in text
 
+def test_note_shown_only_when_present():
+    row = _sample_row()
+    assert "비고" not in "".join(str(b) for b in build_approval_card(row))
+    row_with_note = {**row, "note": "6월 팀 점심 회식"}
+    text = "".join(str(b) for b in build_approval_card(row_with_note))
+    assert "비고" in text and "6월 팀 점심 회식" in text
+
 def test_decided_card_has_no_buttons():
     row = {**_sample_row(), "status": "approved",
            "decided_by": "U2", "decided_at": "2026-05-28T14:33:00"}

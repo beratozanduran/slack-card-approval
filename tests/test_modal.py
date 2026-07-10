@@ -15,3 +15,9 @@ def test_modal_has_all_26_categories():
     view = build_approval_modal(prefill_name="x")
     cat_block = next(b for b in view["blocks"] if b["block_id"] == "category")
     assert len(cat_block["element"]["options"]) == 26
+
+def test_modal_has_optional_note_field():
+    view = build_approval_modal(prefill_name="x")
+    note_block = next(b for b in view["blocks"] if b["block_id"] == "note")
+    assert note_block["optional"] is True
+    assert note_block["element"]["multiline"] is True

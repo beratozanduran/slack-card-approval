@@ -3,16 +3,19 @@ from unittest.mock import MagicMock
 from handlers.view_submission import ack_submission, process_submission
 
 
-def _view_payload(*, amount="12000", used_date="2026-06-30"):
+def _view_payload(*, amount="12000", used_date="2026-06-30", note=None):
+    values = {
+        "requester_name": {"value": {"value": "Ozan"}},
+        "category":       {"value": {"selected_option": {"value": "업무교통비"}}},
+        "amount":         {"value": {"value": amount}},
+        "used_date":      {"value": {"selected_date": used_date}},
+        "merchant":       {"value": {"value": "택시"}},
+    }
+    # 선택 입력: 미입력 시 Slack은 value를 None으로 보낸다.
+    values["note"] = {"value": {"value": note}}
     return {
         "callback_id": "approval_submit",
-        "state": {"values": {
-            "requester_name": {"value": {"value": "Ozan"}},
-            "category":       {"value": {"selected_option": {"value": "업무교통비"}}},
-            "amount":         {"value": {"value": amount}},
-            "used_date":      {"value": {"selected_date": used_date}},
-            "merchant":       {"value": {"value": "택시"}},
-        }},
+        "state": {"values": values},
     }
 
 
@@ -58,6 +61,30 @@ def test_process_posts_channel_then_dm_with_data_in_button():
     assert data["channel_msg_ts"] == "100.0"
     assert data["category"] == "업무교통비"
     assert data["amount"] == 12000
+
+
+def test_note_carried_when_provided():
+    client = MagicMock()
+    client.chat_postMessage.return_value = {"ts": "100.0"}
+    body = {"user": {"id": "U1"},
+            "view": _view_payload(note="6월 팀 점심 회식")}
+    process_submission(body, client,
+                       approver_user_id="U_APPR", log_channel_id="C_LOG")
+    dm_blocks = client.chat_postMessage.call_args_list[1].kwargs["blocks"]
+    action_block = next(b for b in dm_blocks if b["type"] == "actions")
+    data = json.loads(action_block["elements"][0]["value"])
+    assert data["note"] == "6월 팀 점심 회식"
+
+
+def test_note_defaults_empty_when_omitted():
+    client = MagicMock()
+    client.chat_postMessage.return_value = {"ts": "100.0"}
+    process_submission(_body(), client,
+                       approver_user_id="U_APPR", log_channel_id="C_LOG")
+    dm_blocks = client.chat_postMessage.call_args_list[1].kwargs["blocks"]
+    action_block = next(b for b in dm_blocks if b["type"] == "actions")
+    data = json.loads(action_block["elements"][0]["value"])
+    assert data["note"] == ""
 
 
 def test_process_dm_failure_rolls_back():

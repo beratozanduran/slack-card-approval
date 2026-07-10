@@ -11,13 +11,24 @@ def test_build_row_orders_columns_correctly():
         "decided_by": "U_APPR", "decided_by_name": "오잔",
         "reject_reason": None,
         "decided_at": "2026-05-28T14:33", "created_at": "2026-05-28T14:32",
+        "note": "6월 팀 점심",
     }
-    # 승인자는 이름(decided_by_name)으로, 상태는 한글로 기록
+    # 승인자는 이름(decided_by_name)으로, 상태는 한글로, 비고는 맨 끝 열에 기록
     assert build_row(row) == [
         42, "Ozan", "점심식비", 12000, "2026-05-28",
         "김밥천국", "승인", "오잔", "",
-        "2026-05-28T14:33", "2026-05-28T14:32",
+        "2026-05-28T14:33", "2026-05-28T14:32", "6월 팀 점심",
     ]
+
+
+def test_build_row_note_defaults_to_empty_when_missing():
+    row = {
+        "id": 1, "requester_name": "x", "category": "기타비용",
+        "amount": 1, "used_date": "2026-05-28", "merchant": "m",
+        "status": "approved", "decided_by": "U",
+        "decided_at": "t", "created_at": "t",
+    }
+    assert build_row(row)[-1] == ""
 
 
 def test_build_row_records_reject_reason_and_label():

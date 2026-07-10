@@ -12,6 +12,15 @@ def _fields(row: dict) -> list:
     ]
 
 
+def _note_blocks(row: dict) -> list:
+    """비고가 입력된 경우에만 별도 섹션으로 표시한다(멀티라인 대응)."""
+    note = row.get("note")
+    if not note:
+        return []
+    return [{"type": "section",
+             "text": {"type": "mrkdwn", "text": f"*비고*\n{note}"}}]
+
+
 def build_approval_card(row: dict) -> list:
     """승인자 DM용 카드 — 승인/반려 버튼 포함.
 
@@ -24,6 +33,7 @@ def build_approval_card(row: dict) -> list:
          "text": {"type": "plain_text",
                   "text": f"💳 에듀카드 사용 요청 (#{row['id']})"}},
         {"type": "section", "fields": _fields(row)},
+        *_note_blocks(row),
         {"type": "actions", "block_id": "decision", "elements": [
             {"type": "button", "action_id": "approve",
              "text": {"type": "plain_text", "text": "✅ 승인"},
@@ -42,6 +52,7 @@ def build_pending_channel_card(row: dict) -> list:
          "text": {"type": "plain_text",
                   "text": f"💳 에듀카드 사용 요청 (#{row['id']})"}},
         {"type": "section", "fields": _fields(row)},
+        *_note_blocks(row),
         {"type": "context", "elements": [
             {"type": "mrkdwn",
              "text": f"⏳ *승인 대기중* · 신청자: <@{row['requester_id']}>"}
@@ -56,6 +67,7 @@ def build_decided_card(row: dict) -> list:
         {"type": "header",
          "text": {"type": "plain_text", "text": status_label}},
         {"type": "section", "fields": _fields(row)},
+        *_note_blocks(row),
     ]
     if row["status"] == "rejected" and row.get("reject_reason"):
         blocks.append({

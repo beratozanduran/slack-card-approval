@@ -5,7 +5,7 @@ from google.oauth2.service_account import Credentials
 log = logging.getLogger(__name__)
 
 HEADER = ["id", "신청자", "용도", "금액", "사용날짜", "가맹점",
-          "상태", "승인자", "반려사유", "처리일시", "신청일시"]
+          "상태", "승인자", "반려사유", "처리일시", "신청일시", "비고"]
 
 # 상태 코드를 사람이 읽는 한국어로 변환
 STATUS_LABEL = {"pending": "대기중", "approved": "승인", "rejected": "반려"}
@@ -24,6 +24,7 @@ def build_row(row: dict) -> list:
         STATUS_LABEL.get(row["status"], row["status"]), approver,
         row.get("reject_reason") or "",
         _to_str(row["decided_at"]), _to_str(row["created_at"]),
+        row.get("note") or "",
     ]
 
 

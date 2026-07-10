@@ -88,5 +88,17 @@ def build_approval_modal(*, prefill_name: str) -> dict:
                 "label": {"type": "plain_text", "text": "가맹점명"},
                 "element": {"type": "plain_text_input", "action_id": "value"},
             },
+            {
+                "type": "input",
+                "block_id": "note",
+                "optional": True,
+                "label": {"type": "plain_text", "text": "비고 (사용 사유·메모)"},
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "value",
+                    "multiline": True,
+                    "max_length": 500,
+                },
+            },
         ],
     }
