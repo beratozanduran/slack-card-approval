@@ -156,7 +156,8 @@ docker-compose.yml
 > **상태 저장 안 함(DB 없음):** 신청 데이터는 승인자 카드의 버튼 `value`(JSON)와
 > 반려 모달 `private_metadata`에 실려 결정 시점까지 운반된다. 영속 기록은 **Google
 > Sheets**가 유일하다. 따라서 별도 DB·retry 큐가 없고, Sheets 기록 실패 시 인라인
-> 재시도 후 실패하면 해당 스레드에 ⚠️ 경고를 남긴다.
+> 재시도 후 실패하면 해당 스레드에 ⚠️ 경고를 남긴다. 단계별 실패 처리와 수동 복구
+> 절차는 [`docs/failure-handling.md`](docs/failure-handling.md) 참고.
 
 ## 7. 트러블슈팅
 
@@ -165,7 +166,7 @@ docker-compose.yml
 - **승인자 DM이 안 온다** — `APPROVER_USER_ID`가 올바른 Slack User ID(U로 시작)인지, 봇이 해당 사용자에게 DM 보낼 권한(`chat:write`)이 있는지 확인.
 - **`#카드승인-로그`에 카드/스레드가 안 보인다** — 봇을 채널에 초대(`/invite @<botname>`)하거나 `chat:write.public` 권한 부여. 신청 시 채널 게시가 실패하면 신청 자체가 롤백되니 채널 권한을 먼저 확인.
 - **반려 사유 모달이 안 뜬다** — Interactivity가 활성화됐는지, 반려 버튼 클릭 후 `trigger_id` 만료(3초) 전에 처리되는지 확인.
-- **Google Sheets 행이 안 추가됨** — 서비스 계정 이메일이 시트의 편집자로 공유됐는지, `GOOGLE_SHEETS_ID`가 맞는지 확인. 실패 시 자동으로 큐에 적재되고 5분마다 재시도.
+- **Google Sheets 행이 안 추가됨** — 서비스 계정 이메일이 시트의 편집자로 공유됐는지, `GOOGLE_SHEETS_ID`가 맞는지 확인. DB가 없어 영속 큐는 없고, 실패 시 0.5초 간격 인라인 재시도 3회 후에도 실패하면 해당 신청 스레드에 ⚠️ 경고가 남는다. 수동 복구 절차는 [`docs/failure-handling.md`](docs/failure-handling.md) 참고.
 
 ## 8. AWS Lambda 배포 (Terraform)
 
