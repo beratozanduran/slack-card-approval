@@ -31,7 +31,7 @@ def build_approval_card(row: dict) -> list:
     return [
         {"type": "header",
          "text": {"type": "plain_text",
-                  "text": f"💳 에듀카드 사용 요청 (#{row['id']})"}},
+                  "text": "💳 에듀카드 사용 요청"}},
         {"type": "section", "fields": _fields(row)},
         *_note_blocks(row),
         {"type": "actions", "block_id": "decision", "elements": [
@@ -50,7 +50,7 @@ def build_pending_channel_card(row: dict) -> list:
     return [
         {"type": "header",
          "text": {"type": "plain_text",
-                  "text": f"💳 에듀카드 사용 요청 (#{row['id']})"}},
+                  "text": "💳 에듀카드 사용 요청"}},
         {"type": "section", "fields": _fields(row)},
         *_note_blocks(row),
         {"type": "context", "elements": [
